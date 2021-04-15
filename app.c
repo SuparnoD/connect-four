@@ -10,6 +10,16 @@ struct stack {
     int top;
 };
 
+struct node {
+    char array[MAX][10];
+    struct node * prev;
+    struct node * next;
+};
+
+void prepend(struct node **, char board[][10]);
+void append(struct node **, char board[][10]);
+int count(struct node *);
+
 void init_stack(struct stack *);
 void push(struct stack *, char board[][10]);
 void pop(struct stack *);
@@ -20,6 +30,7 @@ int drop(char board[][10]);
 void check(char board[][10],char str, int choice);
 
 struct stack s;
+struct node *list;
 bool winner = false;
 bool x_turn;
 bool undo;
@@ -28,23 +39,27 @@ int drop_choice;
 
 int main(){
     init_stack(&s);
+    list = NULL;
     int width = 7;
     int length = 6;
     x_turn = true;
     undo = false;
 
     display_board(board);
-    int x = 10;
+    append(&list, board);
+    //int x = 10;
 
     while(!winner){
         if(x_turn){
             if(!winner){
                 x_turn = false;
+                printf("Move Number: %d\n", count(list));
                 printf("X's Turn\n");
                 drop_choice = drop(board);
                 push(&s, board);
                 check(board, 'X', drop_choice);
                 display_board(board);
+                append(&list, board);
                 menu();
                 if(undo){
                     x_turn = true;
@@ -56,11 +71,13 @@ int main(){
         if(!x_turn){
                 if(!winner){
                     x_turn = true;
+                    printf("Move Number: %d\n", count(list));
                     printf("O's Turn\n");
                     drop_choice = drop(board);
                     push(&s, board);
                     check(board, 'O', drop_choice);
                     display_board(board);
+                    append(&list, board);
                     menu();
                     if(undo){
                         x_turn = false;
@@ -94,13 +111,75 @@ void pop(struct stack *s){
     s->top--;
 }
 
+void prepend(struct node ** list, char board[][10]){
+    struct node *temp;
+    temp = (struct node *) malloc(sizeof(struct node));
+    temp -> prev = NULL;
+    memcpy(temp -> array, board, 1000);
+    temp -> next = *list;
+
+    (*list) -> prev = temp;
+    *list = temp;
+}
+
+void append(struct node **list, char board[][10]){
+    struct node *temp, *current = *list;
+    if(*list == NULL){
+        *list = (struct node *) malloc(sizeof(struct node));
+        (*list) -> prev = NULL;
+        memcpy((*list) -> array, board, 1000);
+        (*list) -> next = NULL;
+    } else {
+        while(current -> next != NULL)
+            current = current -> next;
+        
+        temp = (struct node *) malloc(sizeof(struct node));
+        memcpy(temp -> array, board, 1000);
+        temp -> next = NULL;
+        temp -> prev = current;
+        current -> next = temp;
+    }
+}
+
+int count(struct node *list){
+    int count = 0;
+    while(list != NULL){
+        list = list -> next;
+        count++;;
+    }
+    return count;
+}
+
+void insert_after(struct node * list, int location, char game[][10]){
+    struct node *temp;
+    int i;
+
+    for(i=0; i<location; i++){
+        list = list -> next;
+        if(list == NULL){
+            printf("Number of moves are %d but supplied number is %d\n", i, location);
+            return;
+        }
+    }
+    list = list -> prev;
+    temp = (struct node *) malloc (sizeof(struct node));
+    memcpy(temp -> array, game, 1000);
+    temp -> prev = list;
+    temp -> next = list -> next;
+    temp -> next -> prev = temp;
+    list -> next = temp;
+    memcpy(board, list -> array, 1000);
+    display_board(board);
+}
+
 void menu(){
     int choice;
 
     printf("\nWould you like to:\n");
     printf("1. Proceed\n");
     printf("2. Undo\n");
-    printf("3. Exit\n");
+    printf("3. Replay Game from Moves\n");
+    printf("4. Exit\n");
     scanf("%d", &choice);
 
     if(choice==1){
@@ -112,6 +191,12 @@ void menu(){
         display_board(board);
         menu();
     } else if(choice==3){
+        int move;
+        printf("Please enter the Move Number you would like to revert to: ");
+        scanf("%d", &move);
+        insert_after(list, move, board);
+        menu();
+    } else if(choice==4){
         printf("Program Terminated...\n");
         exit(0);
     } else {
@@ -141,7 +226,7 @@ void display_board(char board[][10]){
 int drop(char board[][10]){
     int choice;
 
-    printf("Select 1-7\n");
+    printf("Select 1-7: ");
     scanf("%d", &choice);
 
     while(choice < 1 || choice > 7){
