@@ -21,55 +21,52 @@ void check(char board[][10],char str, int choice);
 
 struct stack s;
 bool winner = false;
-bool undo = false;
+bool x_turn;
+bool undo;
 char board[9][10];
 int drop_choice;
 
 int main(){
     init_stack(&s);
-
-    int turn = 1;
     int width = 7;
     int length = 6;
+    x_turn = true;
+    undo = false;
 
     display_board(board);
     int x = 10;
 
     while(!winner){
-        if(!winner){
-            if(!undo){
-                if(turn==1){
-                    turn++;
+        if(x_turn){
+            if(!winner){
+                x_turn = false;
                 printf("X's Turn\n");
                 drop_choice = drop(board);
                 push(&s, board);
                 check(board, 'X', drop_choice);
                 display_board(board);
-                turn++;
                 menu();
-            } else {
-                undo = false;
-                turn--;
-                pop(&s);
-            }
-            }
+                if(undo){
+                    x_turn = true;
+                    undo = false;
+                    }
+                }
         }
-        if(!winner){
-            if(!undo){
-                if(turn==2){
-                    turn--;
-                printf("O's Turn\n");
-                drop_choice = drop(board);
-                push(&s, board);
-                check(board, 'O', drop_choice);
-                display_board(board);
-                menu();
-            } else {
-                undo = false;
-                turn++;
-                pop(&s);
-            }
-            }
+
+        if(!x_turn){
+                if(!winner){
+                    x_turn = true;
+                    printf("O's Turn\n");
+                    drop_choice = drop(board);
+                    push(&s, board);
+                    check(board, 'O', drop_choice);
+                    display_board(board);
+                    menu();
+                    if(undo){
+                        x_turn = false;
+                        undo = false;
+                        }
+                    }
         }
     }
 
@@ -109,6 +106,8 @@ void menu(){
     if(choice==1){
     } else if(choice==2){
         winner = false;
+        undo = true;
+
         pop(&s);
         display_board(board);
         menu();
