@@ -1,42 +1,100 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
+
+#define MAX 1000
+
+struct stack {
+    char array[MAX][10];
+    int top;
+};
+
+void init_stack(struct stack *);
+void push(struct stack *, char board[][10]);
+void pop(struct stack *);
 
 void menu();
 void display_board(char board[][10]);
 int drop(char board[][10]);
 void check(char board[][10],char str, int choice);
 
+struct stack s;
 bool winner = false;
+bool undo = false;
+char board[9][10];
+int drop_choice;
 
 int main(){
-    char board[9][10];
+    init_stack(&s);
+
+    int turn = 1;
     int width = 7;
     int length = 6;
-    int drop_choice;
 
     display_board(board);
     int x = 10;
 
     while(!winner){
         if(!winner){
-            menu();
-            printf("X's Turn\n");
-            drop_choice = drop(board);
-            check(board, 'X', drop_choice);
-            display_board(board);
+            if(!undo){
+                if(turn==1){
+                    turn++;
+                printf("X's Turn\n");
+                drop_choice = drop(board);
+                push(&s, board);
+                check(board, 'X', drop_choice);
+                display_board(board);
+                turn++;
+                menu();
+            } else {
+                undo = false;
+                turn--;
+                pop(&s);
+            }
+            }
         }
-
         if(!winner){
-            menu();
-            printf("O's Turn\n");
-            drop_choice = drop(board);
-            check(board, 'O', drop_choice);
-            display_board(board);
+            if(!undo){
+                if(turn==2){
+                    turn--;
+                printf("O's Turn\n");
+                drop_choice = drop(board);
+                push(&s, board);
+                check(board, 'O', drop_choice);
+                display_board(board);
+                menu();
+            } else {
+                undo = false;
+                turn++;
+                pop(&s);
+            }
+            }
         }
     }
 
     return 0;
+}
+
+void init_stack(struct stack *s){
+    s->top = -1;
+}
+
+void push(struct stack *s, char board[][10]){
+    if(s->top == MAX -1){
+        printf("error");
+        return;
+    }
+    s->top++;
+    memcpy(s->array[s->top], board, 1000);
+}
+
+void pop(struct stack *s){
+    if(s->top == -1){
+        printf("--- BEGINNING OF GAME REACHED ---");
+    }
+    memcpy(board, &s->array[s->top], 1000);
+    s->top--;
 }
 
 void menu(){
@@ -50,7 +108,10 @@ void menu(){
 
     if(choice==1){
     } else if(choice==2){
-        printf("Feature not implemented\n");
+        winner = false;
+        pop(&s);
+        display_board(board);
+        menu();
     } else if(choice==3){
         printf("Program Terminated...\n");
         exit(0);
@@ -105,6 +166,13 @@ void check(char board[][10],char str, int choice){
         else
         --length;
     }while (turn !=1);
+
+    if(str == '*'){
+        if(board[length][choice] == 'X' || board[length][choice] == 'O'){
+            board[length][choice] == str;
+            turn = 1;
+        }
+    }
 
     // up-down
     if(board[length][choice] == 'X'   && 
