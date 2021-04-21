@@ -22,14 +22,15 @@ int count(struct node *);
 
 void init_stack(struct stack *);
 void push(struct stack *, char board[][10]);
-void pop(struct stack *);
+void pop(struct stack *, char board[][10]);
 
 void menu();
 void display_board(char board[][10]);
 int drop(char board[][10]);
 void check(char board[][10],char str, int choice);
 
-struct stack s;
+struct stack us;
+struct stack rs;
 struct node *list;
 bool winner = false;
 bool x_turn;
@@ -38,7 +39,8 @@ char board[9][10];
 int drop_choice;
 
 int main(){
-    init_stack(&s);
+    init_stack(&us);
+    init_stack(&rs);
     list = NULL;
     int width = 7;
     int length = 6;
@@ -56,7 +58,7 @@ int main(){
                 printf("Move Number: %d\n", count(list));
                 printf("X's Turn\n");
                 drop_choice = drop(board);
-                push(&s, board);
+                push(&us, board);
                 check(board, 'X', drop_choice);
                 display_board(board);
                 append(&list, board);
@@ -74,12 +76,13 @@ int main(){
                     printf("Move Number: %d\n", count(list));
                     printf("O's Turn\n");
                     drop_choice = drop(board);
-                    push(&s, board);
+                    push(&us, board);
                     check(board, 'O', drop_choice);
                     display_board(board);
                     append(&list, board);
                     menu();
                     if(undo){
+                        push(&rs, board);
                         x_turn = false;
                         undo = false;
                         }
@@ -100,14 +103,14 @@ void push(struct stack *s, char board[][10]){
         return;
     }
     s->top++;
-    memcpy(s->array[s->top], board, 1000);
+    memcpy(s->array[s->top], board, 9500);
 }
 
-void pop(struct stack *s){
+void pop(struct stack *s, char board[][10]){
     if(s->top == -1){
         printf("--- BEGINNING OF GAME REACHED ---");
     }
-    memcpy(board, &s->array[s->top], 1000);
+    memcpy(board, &s->array[s->top], 9500);
     s->top--;
 }
 
@@ -178,25 +181,37 @@ void menu(){
     printf("\nWould you like to:\n");
     printf("1. Proceed\n");
     printf("2. Undo\n");
-    printf("3. Replay Game from Moves\n");
-    printf("4. Exit\n");
+    printf("3. Redo\n");
+    printf("4. Replay Game from Moves\n");
+    printf("5. Exit\n");
     scanf("%d", &choice);
 
     if(choice==1){
     } else if(choice==2){
         winner = false;
         undo = true;
-
-        pop(&s);
+        pop(&us, board);
         display_board(board);
         menu();
     } else if(choice==3){
+        if((rs).top == -1){
+            printf("Nothing left to redo!\n");
+            menu();
+        } else {
+            undo = false;
+            winner = false;
+            pop(&rs, board);
+            display_board(board);
+            menu();
+        }
+    } else if(choice==4){
+        winner = false;
         int move;
         printf("Please enter the Move Number you would like to revert to: ");
         scanf("%d", &move);
         insert_after(list, move, board);
         menu();
-    } else if(choice==4){
+    } else if(choice==5){
         printf("Program Terminated...\n");
         exit(0);
     } else {
