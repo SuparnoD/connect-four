@@ -42,8 +42,8 @@ int main(){
     init_stack(&us);
     init_stack(&rs);
     list = NULL;
-    int width = 7;
-    int length = 6;
+    //int width = 7;
+    //int length = 6;
     x_turn = true;
     undo = false;
 
@@ -82,7 +82,6 @@ int main(){
                     append(&list, board);
                     menu();
                     if(undo){
-                        push(&rs, board);
                         x_turn = false;
                         undo = false;
                         }
@@ -108,10 +107,11 @@ void push(struct stack *s, char board[][10]){
 
 void pop(struct stack *s, char board[][10]){
     if(s->top == -1){
-        printf("--- BEGINNING OF GAME REACHED ---");
+        printf("--- BEGINNING OF GAME REACHED ---\n");
+    } else {
+        memcpy(board, &s->array[s->top], 9500);
+        s->top--;
     }
-    memcpy(board, &s->array[s->top], 9500);
-    s->top--;
 }
 
 void prepend(struct node ** list, char board[][10]){
@@ -190,20 +190,21 @@ void menu(){
     } else if(choice==2){
         winner = false;
         undo = true;
+        push(&rs, board);
         pop(&us, board);
         display_board(board);
         menu();
     } else if(choice==3){
-        if((rs).top == -1){
-            printf("Nothing left to redo!\n");
-            menu();
-        } else {
-            undo = false;
-            winner = false;
+        undo = false;
+        winner = false;
+        if((rs).top != -1){
+            push(&us, board);
             pop(&rs, board);
-            display_board(board);
-            menu();
+        } else {
+            printf("Nothing left to redo!\n");
         }
+        display_board(board);
+        menu();
     } else if(choice==4){
         winner = false;
         int move;
